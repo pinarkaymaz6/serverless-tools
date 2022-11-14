@@ -1,0 +1,29 @@
+service: pnka-serverless
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: eu-west-1
+  profile: playground
+
+custom:
+  serverless-bucket: pnka-serverless
+  transcode-video-role: arn:aws:iam::453776291432:role/pnka-serverless-transcoder-lambda-role
+  media-endpoint: https://2k4nj1qdb.mediaconvert.eu-west-1.amazonaws.com
+  media-role: arn:aws:iam::453776291432:role/pnka-serverless-media-convert-role
+
+functions:
+  transcoder:
+    handler: handler.transcoder
+    role: ${self:custom.transcode-video-role}
+    environment:
+      MEDIA_ENDPOINT: ${self:custom.media-endpoint}
+      MEDIA_ROLE:  ${self:custom.media-role}
+      TRANSCODED_VIDEOS_PATH:  transcoded-videos
+    events:
+      - s3:
+          bucket: ${self:custom.serverless-bucket}
+          rules:
+            - prefix: upload-videos
+          existing: true
